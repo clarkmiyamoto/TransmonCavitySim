@@ -17,14 +17,14 @@ class AbstractSim:
                 raise ValueError(f'`{component_name}` not in `design.components`')
         return True
         
-    def get_EigenModes(self):
+    def run_EigenModes(self):
         """Use HFSS Eigenmode to get frequencies"""
         raise NotImplementedError('Must implement `get_EigenModes` method.')
 
-    def get_EPR(self):
+    def run_EPR(self):
         """Connect to HFSS Eigenmode, run `pyEPR` analysis on it."""
         raise NotImplementedError('Must implement `run_EPR` method.')
     
-    def get_CapMatirx(self):
+    def run_CapMatirx(self):
         """Use Q3D to get capacitance matricies"""
         raise NotImplementedError('Must implement `get_CapMatirx` method.')

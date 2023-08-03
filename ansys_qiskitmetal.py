@@ -58,7 +58,7 @@ class AnsysQiskitMetal(AbstractSim):
 
         self.parse_results()
 
-    def get_EigenModes(self,
+    def run_EigenModes(self,
                        design_name: str = "QubitCavity_eigenmode",
                        setup_name: str = "Setup",
                        min_freq_ghz: int = 2,
@@ -92,8 +92,6 @@ class AnsysQiskitMetal(AbstractSim):
             other_mesh_MaxLength (dict, optional): A dictionary of additional regions and their maximum mesh lengths
                 in micrometers. The keys should be the region names, and values should be the maximum mesh length.
 
-        Returns:
-            self.undressed_freqs (list):  List of mode frequencies. Ordered smallest to largest.
         """
 
         if (n_modes != 2):
@@ -151,16 +149,6 @@ class AnsysQiskitMetal(AbstractSim):
 
         ### Analyze Setup
         hfss.analyze_setup(setup_name)
-
-        # Get Undressed_freq
-        hfss.
-
-    
-        ### Log Results
-        self.undressed_freqs = Dict(
-            qubit_freq  = self.qubit_freq, 
-            cavity_freq = self.cavity_freq
-        )
         
         ### Release ANSYS Session
         self.hfss_renderer.sim.renderer = hfss
@@ -169,9 +157,8 @@ class AnsysQiskitMetal(AbstractSim):
         ### Log succsessful HFSS Eigenmode Simulation
         self.got_EigenModes = True
 
-        return self.undressed_freqs
 
-    def get_EPR(self, 
+    def run_EPR(self, 
                 cos_trunc: int = 8, 
                 fock_trunc: int = 15,
                 print_result: bool = True) -> epr.QuantumAnalysis:
@@ -180,14 +167,14 @@ class AnsysQiskitMetal(AbstractSim):
         Args:
             cos_trunc (int, optional): Truncate Taylor expansion of cosine terms in Transmon Hamiltonian. Defaults to 8.
             fock_trunc (int, optional): Truncate fock space Hamiltonian for numerical diagonalization. Defaults to 15.
-            print_results (bool, optional): Display results? Defaults to True.
+             (bool, optional): Display results? Defaults to True.
 
         Returns
             self.epra (epr.QuantumAnalysis): Obj containing characteristics of Jaynes Cummings Hamiltonian.
             
         """
         if (self.got_EigenModes != True):
-            raise RuntimeError("Must run `get_EigenModes` before calling `get_EPR`.")
+            raise RuntimeError("Must run `run_EigenModes` before calling `run_EPR`.")
 
         ### Connect EPR to ANSYS
         self.hfss_renderer.sim.renderer.activate_ansys_design(self.eigenmode_design_name, 'eigenmode')
@@ -238,7 +225,7 @@ class AnsysQiskitMetal(AbstractSim):
 
         return epra
             
-    def get_CapMatirx(self,
+    def run_CapMatirx(self,
                       design_name: str = "QubitCavity_q3d",
                       setup_name: str = "Setup",
                       freq_ghz: int = 2,
@@ -290,7 +277,7 @@ class AnsysQiskitMetal(AbstractSim):
         ### Start ANSYS
         q3d.start()
         q3d.activate_ansys_design(design_name, 'capacitive')
-me
+
         ### Render design to ANSYS
         q3d.clean_active_design()
         q3d.render_design(self.selection, self.open_pins)
@@ -322,14 +309,14 @@ me
         q3d.add_q3d_setup(
                       name=setup_name,
                       freq_ghz=freq_ghz,
-                      save_fields=True:,
-                      enabled=True:,
+                      save_fields=True,
+                      enabled=True,
                       max_passes=max_passes,
                       min_passes=min_passes,
                       min_converged_passes=min_converged,
-                      percent_error=max_delta_f: ,
+                      percent_error=max_delta_f,
                       percent_refinement=pct_refinement,
-                      auto_increase_solution_order=auto_increase_solution_order:,
+                      auto_increase_solution_order=auto_increase_solution_order,
                       solution_order=solution_order,
                       solver_type=solver_type)
 
@@ -378,12 +365,25 @@ me
         aedt.release_desktop(close_projects=False, close_desktop=False)
 
 
-     def _parse_results(self):
-        raise NotImplementedError('Parse through `self.epra` and `self.capmatrix` to get Hamiltonain parameters.')
+    def _parse_results(self, print_result=True):
+        raise NotImplementedError('Need to set self.qubit_freq, self.cavity_freq, etc...')
+
+        if (self.got_EPR == False) or (self.got_CapMatrix == False) or (self.got_EigenModes == False):
+            raise RuntimeError("Must run `run_EigenMode`, `run_EPR`, and `run_CapMatrix` before calling `_parse_results`.")
+
+        if print_result:
+            print('___________')
+            print(f'Qubit Frequency (f_q) = {self.qubit_freq} Linear MHz')
+            print(f'Cavity Frequency (f_cav) = {self.cavity_freq} Linear MHz')
+            print(f'Qubit Anharmonicity (f_q) = {self.anharmonicity} Linear MHz')
+            print(f'Coupling Strength (g) = {self.coupling_strength} Linear MHz')
+            print('____________')
+
+
 
     def _parse_EPR(self) -> dict:
-        if not self.got_EPR:
+        if (self.got_EPR == False):
             raise RuntimeError("Must run `run_EPR` before calling `parse_EPR`.")
-        raise NotImplementedError('Parse through `self.epra`)
+        raise NotImplementedError('Parse through `self.epra`')
 
         
