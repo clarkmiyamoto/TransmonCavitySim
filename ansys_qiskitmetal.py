@@ -16,7 +16,7 @@ class AnsysQiskitMetal(AbstractSim):
                  connection_pad_name: str,
                  cpws_names: list[str],
                  feedline_name: str,
-                 other_names: list[str] = None,
+                 other_names: list[str] = [],
                  open_pins: list[tuple[str, str]] = None):
         super().__init__(design=design, selection=[qubit_name] + cpws_names + [feedline_name] + other_names, open_pins=open_pins)
 
@@ -120,7 +120,7 @@ class AnsysQiskitMetal(AbstractSim):
                                  MaxLength=qubit_mesh_MaxLength)
 
         # CPW Mesh
-        trace_names = [f'trace_{cpws_name}' for cpw_name in self.cpws_names]
+        trace_names = [f'trace_{cpw_name}' for cpw_name in self.cpws_names]
         claw_name = [f'{self.connection_pad_name}_connector_arm_{self.qubit_name}']
         hfss.modeler.mesh_length('cpw',
                                 trace_names + claw_name,
@@ -289,7 +289,7 @@ class AnsysQiskitMetal(AbstractSim):
                                  MaxLength=qubit_mesh_MaxLength)
 
         # CPW Mesh
-        trace_names = [f'trace_{cpws_name}' for cpw_name in self.cpws_names]
+        trace_names = [f'trace_{cpw_name}' for cpw_name in self.cpws_names]
         claw_name = [f'{self.connection_pad_name}_connector_arm_{self.qubit_name}']
         hfss.modeler.mesh_length('cpw',
                                 trace_names + claw_name,

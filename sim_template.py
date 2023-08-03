@@ -12,8 +12,8 @@ class AbstractSim:
             self.open_pins = open_pins
 
     def valid_selection(self, selection):
-        for component_name in self.design.components.keys():
-            if component_name in selection:
+        for component_name in selection:
+            if component_name not in self.design.components.keys():
                 raise ValueError(f'`{component_name}` not in `design.components`')
         return True
         
