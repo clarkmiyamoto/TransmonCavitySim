@@ -134,7 +134,7 @@ class AnsysQiskitMetal(AbstractSim):
                                         MaxLength=MaxLength)
 
         ### Change silicon
-        self._change_silicon(solutiontype='Eigenmode')
+        self._pyAEDT_functionality(solutiontype='Eigenmode')
 
         ### Add Setup
         hfss.add_eigenmode_setup(name=setup_name,
@@ -336,8 +336,12 @@ class AnsysQiskitMetal(AbstractSim):
 
         return self.cap_matrix
 
-    def _change_silicon(self, solutiontype):
-        """Interfaces w/ ANSYS and changes material properties of Silicon to mimic ultra cold Silicon."""
+    def _pyAEDT_functionality(self, solutiontype):
+        """Interfaces w/ ANSYS via pyEPR for more custom automation.
+        1. Connect to ANSYS
+        2. Change Silicon permitivity to 11.45; represents ultra cold silicon.
+        3. Checks for prexisting Setups, deletes them...
+        """
 
         if solutiontype == 'Eigenmode':
             projectname = self.hfss_renderer.sim.renderer.pinfo.project_name
@@ -357,19 +361,43 @@ class AnsysQiskitMetal(AbstractSim):
         else:
             raise NotImplementedError('`solutiontype` not implemented yet. Only supports ["Eigenmode", "Q3d"].')
         
+        self._ultra_cold_silicon(aedt)
+        self._delete_old_setups(aedt)
+
+        aedt.release_desktop(close_projects=False, close_desktop=False)
+
+    def _ultra_cold_silicon(self, aedt):
+        """Change silicon properties to ultra cold silicon
+        
+        Args:
+            aedt (pyAEDT Desktop obj)
+        """
         materials = aedt.materials
         silicon = materials.checkifmaterialexists('silicon')
         silicon.permittivity = 11.45
         silicon.dielectric_loss_tangent = 1E-7
 
-        aedt.release_desktop(close_projects=False, close_desktop=False)
-
+    def _delete_old_setups(self, aedt):
+        """Delete old setups
+        
+        Args:
+            aedt (pyAEDT Desktop obj)
+        """
+        # Clear setups
+        if len(aedt.setups) != 0:
+            aedt.setups[0].delete()
+        
+        
 
     def _parse_all_results(self, print_result=True):
         raise NotImplementedError('Need to set self.qubit_freq, self.cavity_freq, etc...')
 
         if (self.got_EPR == False) or (self.got_CapMatrix == False) or (self.got_EigenModes == False):
             raise RuntimeError("Must run `run_EigenMode`, `run_EPR`, and `run_CapMatrix` before calling `_parse_all_results`.")
+            
+        self._parse_EPR()
+        self._parse_CapMatrix()
+        self._calc_CouplingStrength()
 
         if print_result:
             print('________________')
@@ -382,6 +410,13 @@ class AnsysQiskitMetal(AbstractSim):
     def _parse_EPR(self) -> dict:
         if (self.got_EPR == False):
             raise RuntimeError("Must run `run_EPR` before calling `parse_EPR`.")
-        raise NotImplementedError('Parse through `self.epra`')
+        raise NotImplementedError()
+    
+    def _parse_CapMatrix(self) -> dict:
+        raise NotImplementedError()
+        
+    def _calc_CouplingStrength(self) -> dict:
+        raise NotImplementedError()
+
 
         
