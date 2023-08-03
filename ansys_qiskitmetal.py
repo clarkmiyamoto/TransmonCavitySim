@@ -41,11 +41,11 @@ class AnsysQiskitMetal(AbstractSim):
         self.cap_matrix = None
 
         # Parsed results from simulaton
-        self.qubit_freq        = None
-        self.cavity_freq       = None
-        self.anharmonicity     = None
-        self.dispersive_shift  = None
-        self.coupling_strength = None
+        self.qubit_freq        = None # Linear MHZ
+        self.cavity_freq       = None # Linear MHZ
+        self.anharmonicity     = None # Linear MHZ
+        self.dispersive_shift  = None # Linear MHZ
+        self.coupling_strength = None # Linear MHZ
 
     def run_all_simulations(self, 
                             eigenmode_options: dict = None,
