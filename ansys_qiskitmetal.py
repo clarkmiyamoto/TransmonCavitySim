@@ -303,7 +303,7 @@ class AnsysQiskitMetal(AbstractSim):
                                         MaxLength=MaxLength)
        
         ### Change silicon
-        self._change_silicon(solutiontype='Q3d')
+        self._pyAEDT_functionality(solutiontype='Q3d')
 
         ### Add Setup
         q3d.add_q3d_setup(
