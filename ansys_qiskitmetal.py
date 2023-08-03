@@ -56,7 +56,7 @@ class AnsysQiskitMetal(AbstractSim):
         self.run_EPR(**epr_options)
         self.get_CapMatirx(**capmatrix_options)
 
-        self.parse_results()
+        self._parse_all_results()
 
     def run_EigenModes(self,
                        design_name: str = "QubitCavity_eigenmode",
@@ -365,21 +365,19 @@ class AnsysQiskitMetal(AbstractSim):
         aedt.release_desktop(close_projects=False, close_desktop=False)
 
 
-    def _parse_results(self, print_result=True):
+    def _parse_all_results(self, print_result=True):
         raise NotImplementedError('Need to set self.qubit_freq, self.cavity_freq, etc...')
 
         if (self.got_EPR == False) or (self.got_CapMatrix == False) or (self.got_EigenModes == False):
-            raise RuntimeError("Must run `run_EigenMode`, `run_EPR`, and `run_CapMatrix` before calling `_parse_results`.")
+            raise RuntimeError("Must run `run_EigenMode`, `run_EPR`, and `run_CapMatrix` before calling `_parse_all_results`.")
 
         if print_result:
-            print('___________')
+            print('________________')
             print(f'Qubit Frequency (f_q) = {self.qubit_freq} Linear MHz')
             print(f'Cavity Frequency (f_cav) = {self.cavity_freq} Linear MHz')
             print(f'Qubit Anharmonicity (f_q) = {self.anharmonicity} Linear MHz')
             print(f'Coupling Strength (g) = {self.coupling_strength} Linear MHz')
-            print('____________')
-
-
+            print('________________')
 
     def _parse_EPR(self) -> dict:
         if (self.got_EPR == False):
