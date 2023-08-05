@@ -1,9 +1,11 @@
 # TransmonCavitySim todo
 
 # Todo
-- [ ] get reproducible `conda env` and `requirements.txt`
-- [ ] implement `_parse_CapMatrix` and `_calc_CouplingStrength`
+- [ ] fix issue of `run_Cap` asap
+- [ ] implement `_calc_CouplingStrength`
+- [ ] implement `_parse_CapMatrix`
 - [ ] test `parser` functionality
+- [ ] get reproducible `conda env` and `requirements.txt`
 
 # Finished
 

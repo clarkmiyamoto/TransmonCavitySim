@@ -377,13 +377,13 @@ class AnsysQiskitMetal(AbstractSim):
         Method to plot the mesh of the design.
         """
         # Ensure a design is present
-        if aedt.modeler.primitives.num_objects > 0:
+        if len(aedt.modeler.primitives.get_objects_in_group('all')) > 0:
             # Generate mesh
             max_mesh_length = max(self.qubit_mesh_MaxLength, self.cavity_mesh_MaxLength, self.other_mesh_MaxLength)
             aedt.mesh.assignlength("all", max_mesh_length)
 
             # Create a 3D plot
-            setup_name = aedt.nominal_adaptive
+            setup_name = self.aedt.nominal_adaptive
             mesh_plot = aedt.post.create_fieldplot_surface("Mag_E1", "Phase_E", setup_name)
 
             # Show the plot
