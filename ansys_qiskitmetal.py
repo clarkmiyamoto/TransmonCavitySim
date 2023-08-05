@@ -197,13 +197,6 @@ class AnsysQiskitMetal(AbstractSim):
         if (self.got_EigenModes != True):
             raise RuntimeError("Must run `run_EigenModes` before calling `run_EPR`.")
 
-        ### Connect EPR to ANSYS
-        # Start ANSYS w/ Qiskit Metal, Active Design
-        hfss.start()
-        hfss.activate_ansys_design(design_name, 'eigenmode')
-        self.hfss_renderer.sim.renderer.activate_ansys_design(self.eigenmode_design_name, 'eigenmode')
-        hfss.close()
-
         # Launch pyEPR
         self.pinfo = epr.ProjectInfo()
 
