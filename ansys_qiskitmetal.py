@@ -387,6 +387,7 @@ class AnsysQiskitMetal(AbstractSim):
         
         self._ultra_cold_silicon(aedt)
         self._delete_old_setups(aedt)
+        self._set_variable(aedt)
 
         aedt.release_desktop(close_projects=False, close_desktop=False)
 
@@ -411,7 +412,19 @@ class AnsysQiskitMetal(AbstractSim):
         if len(aedt.setups) != 0:
             aedt.setups[0].delete()
         
+    def _set_variable(self, aedt):
+        """
+        Sets project-level variable in ANSYS.
+
+        Args:
+            aedt (pyAEDT Desktop obj)
+                
+        """
+        variable_manager = self.current_app._variable_manager
         
+        variable_manager["Lj"] = self.design.components[self.qubit_name].options['hfss_inductance']
+        variable_manager["Lj"] = self.design.components[self.qubit_name].options['hfss_capacitance']
+
 
     def _parse_all_results(self, print_result=True):
         raise NotImplementedError('Need to set self.qubit_freq, self.cavity_freq, etc...')
