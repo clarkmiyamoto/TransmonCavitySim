@@ -376,8 +376,7 @@ class AnsysQiskitMetal(AbstractSim):
         """
         Method to plot the mesh of the design.
         """
-        # Ensure a design is present
-        if len(aedt.modeler.primitives.get_objects_in_group('all')) > 0:
+        try:
             # Generate mesh
             max_mesh_length = max(self.qubit_mesh_MaxLength, self.cavity_mesh_MaxLength, self.other_mesh_MaxLength)
             aedt.mesh.assignlength("all", max_mesh_length)
@@ -388,8 +387,8 @@ class AnsysQiskitMetal(AbstractSim):
 
             # Show the plot
             mesh_plot.plot()
-        else:
-            print("No design present to visualize mesh.")
+        except Exception as e:
+            print(f"Failed to visualize mesh. Error: {str(e)}")
 
     def _pyAEDT_functionality(self, solutiontype):
         """Interfaces w/ ANSYS via pyEPR for more custom automation.
@@ -415,7 +414,8 @@ class AnsysQiskitMetal(AbstractSim):
                     close_on_exit=False)
         else:
             raise NotImplementedError('`solutiontype` not implemented yet. Only supports ["Eigenmode", "Q3d"].')
-        
+
+        self.aedt = aedt
         self._ultra_cold_silicon(aedt)
         self._delete_old_setups(aedt)
         self._set_variable(aedt, solutiontype)
