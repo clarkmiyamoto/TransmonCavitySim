@@ -420,8 +420,8 @@ class AnsysQiskitMetal(AbstractSim):
             aedt (pyAEDT Desktop obj)
                 
         """
-        variable_manager = self.current_app._variable_manager
-        
+        variable_manager = aedt._variable_manager
+
         variable_manager["Lj"] = self.design.components[self.qubit_name].options['hfss_inductance']
         variable_manager["Lj"] = self.design.components[self.qubit_name].options['hfss_capacitance']
 
