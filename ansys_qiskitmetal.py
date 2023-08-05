@@ -216,7 +216,7 @@ class AnsysQiskitMetal(AbstractSim):
         
         ℰ_elec = self.eprd.calc_energy_electric()
         ℰ_elec_substrate = self.eprd.calc_energy_electric(None, 'main')
-        ℰ_mag = eprd.calc_energy_magnetic()
+        ℰ_mag = self.eprd.calc_energy_magnetic()
 
         if print_result:
             print(f"""
