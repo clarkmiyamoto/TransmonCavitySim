@@ -194,9 +194,10 @@ class AnsysQiskitMetal(AbstractSim):
         ### Extract Energies
         self.eprd = epr.DistributedAnalysis(self.pinfo)
         
-        ℰ_elec = eprd.calc_energy_electric()
-        ℰ_elec_substrate = eprd.calc_energy_electric(None, 'main')
+        ℰ_elec = self.eprd.calc_energy_electric()
+        ℰ_elec_substrate = self.eprd.calc_energy_electric(None, 'main')
         ℰ_mag = eprd.calc_energy_magnetic()
+
         if print_result:
             print(f"""
             ℰ_elec_all       = {ℰ_elec}
@@ -208,7 +209,7 @@ class AnsysQiskitMetal(AbstractSim):
 
         ### Run EPR analysis
         self.eprd.do_EPR_analysis()
-        self.epra = epr.QuantumAnalysis(eprd.data_filename)
+        self.epra = epr.QuantumAnalysis(self.eprd.data_filename)
         self.epra.analyze_all_variations(cos_trunc=cos_trunc, 
                                          fock_trunc=fock_trunc,
                                          print_result=print_result)
@@ -223,7 +224,7 @@ class AnsysQiskitMetal(AbstractSim):
         ### Log succsessful HFSS Eigenmode Simulation
         self.got_EPR = True
 
-        return epra
+        return self.epra
             
     def run_CapMatirx(self,
                       design_name: str = "QubitCavity_q3d",
@@ -324,7 +325,7 @@ class AnsysQiskitMetal(AbstractSim):
         q3d.analyze_setup(setup_name)
 
         ### Get Capacitance Matrix
-        self.q3d_renderer.sim.capacitance_matrix, c1.sim.units = q3d.get_capacitance_matrix()
+        self.q3d_renderer.sim.capacitance_matrix, self.q3d_renderer.sim.units = q3d.get_capacitance_matrix()
         self.cap_matrix = self.q3d_renderer.sim.capacitance_matrix
 
         ### Release ANSYS
@@ -410,7 +411,24 @@ class AnsysQiskitMetal(AbstractSim):
     def _parse_EPR(self) -> dict:
         if (self.got_EPR == False):
             raise RuntimeError("Must run `run_EPR` before calling `parse_EPR`.")
-        raise NotImplementedError()
+        # Extraction of variables
+        omegas = self.epra.get_frequencies()
+        chis = self.epra.get_chis()
+        other_data = self.epra.data
+
+        
+        self.qubit_freq = omegas['0'][0] # Linear MHz
+        self.cavity_freq = omegas['1'][0] # Linear MHz
+        self.anharmonicity = chis[0][0] # Linear MHz
+        self.other_data_EPR = str(other_data)
+
+        package = {'qubit_freq_MHz': self.qubit_freq,
+                   'cavity_freq_MHz': self.cavity_freq,
+                   'qubit_anharmonicity_MHz': self.anharmonicity,
+                   'other_data': self.other_data_EPR}
+
+        return package
+
     
     def _parse_CapMatrix(self) -> dict:
         raise NotImplementedError()
@@ -418,5 +436,3 @@ class AnsysQiskitMetal(AbstractSim):
     def _calc_CouplingStrength(self) -> dict:
         raise NotImplementedError()
 
-
-        
