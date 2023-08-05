@@ -7,6 +7,8 @@ import pyEPR as epr
 
 from pyaedt import Hfss, Q3d
 
+from datetime import datetime
+
 
 class AnsysQiskitMetal(AbstractSim):
 
@@ -20,25 +22,42 @@ class AnsysQiskitMetal(AbstractSim):
                  open_pins: list[tuple[str, str]] = None):
         super().__init__(design=design, selection=[qubit_name] + cpws_names + [feedline_name] + other_names, open_pins=open_pins)
 
+        ### Renderers
+        # Qiskit Metal
+        self.hfss_renderer = EPRanalysis(design, "hfss")
+        self.q3d_renderer  = LOManalysis(design, "q3d")
+
+        # EPR analysis modules
+        self.pinfo = None
+        self.eprd = None
+        self.epra = None
+
+        ### Naming
+        # Names QComponents
         self.qubit_name = qubit_name
         self.connection_pad_name = connection_pad_name
         self.cpws_names = cpws_names
         self.feedline_name = feedline_name
         self.other_names = other_names
-        
-        # Renderers using Qiskit Metal
-        self.hfss_renderer = EPRanalysis(design, "hfss")
-        self.q3d_renderer  = LOManalysis(design, "q3d")
 
-        # Simulation status
+        # Name of renderers
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+
+        self.hfss_renderer.default_options.project_name = "QubitCavity" + self.timestamp
+        self.q3d_renderer.default_options.project_name = "QubitCavity" + self.timestamp
+        self.eigenmode_design_name = "QubitCavity_eigenmode" + self.timestamp
+        self.q3d_design_name = "QubitCavity_q3d" + self.timestamp
+
+        ### Simulation status
         self.got_EigenModes = False
         self.got_EPR        = False
         self.got_CapMatrix  = False
 
+        ### Results
         # Raw results
-        self.undressed_freqs = None
-        self.epra = None
-        self.cap_matrix = None
+        self.undressed_freqs = None  # Classical frequencies from Eigenmodal sim; in `run_EigenModes`.        
+        self.other_data_EPR = None   # Instance of `pyEPR.QuantumAnalysis.data` after running epr analysis; in `run_EPR`.
+        self.cap_matrix = None       # Instance of `LOManalysis.sim.capacitance_matrix`; in `run_CapMatrix`.
 
         # Parsed results from simulaton
         self.qubit_freq        = None # Linear MHZ
@@ -46,6 +65,7 @@ class AnsysQiskitMetal(AbstractSim):
         self.anharmonicity     = None # Linear MHZ
         self.dispersive_shift  = None # Linear MHZ
         self.coupling_strength = None # Linear MHZ
+
 
     def run_all_simulations(self, 
                             eigenmode_options: dict = None,
@@ -59,7 +79,7 @@ class AnsysQiskitMetal(AbstractSim):
         self._parse_all_results()
 
     def run_EigenModes(self,
-                       design_name: str = "QubitCavity_eigenmode",
+                       design_name: str = None,
                        setup_name: str = "Setup",
                        min_freq_ghz: int = 2,
                        n_modes: int = 2,
@@ -76,7 +96,7 @@ class AnsysQiskitMetal(AbstractSim):
         Runs ANSYS HFSS Eigenmode Simulation and returns mode frequencies. These are classical / undressed frequencies.
 
         Args:
-            design_name (str, optional): The name of the HFSS design to be used for the simulation.
+            design_name (str, optional): The name of the HFSS design to be used for the simulation. Defaults to self.eigenmode_design_name
             setup_name (str, optional): The name of the simulation setup to be used.
             min_freq_ghz (int, optional): The minimum frequency of interest for the simulation, in GHz.
             n_modes (int, optional): The number of electromagnetic modes to compute.
@@ -93,6 +113,11 @@ class AnsysQiskitMetal(AbstractSim):
                 in micrometers. The keys should be the region names, and values should be the maximum mesh length.
 
         """
+        ### Naming of design & setup
+        if (design_name == None):
+            design_name = self.eigenmode_design_name
+
+        self.eigenmode_setup_name = setup_name
 
         if (n_modes != 2):
             print("WARNING: This simulation is designed for Qubit + Cavity. It is normal to set `n_modes = 2`.")
@@ -100,10 +125,6 @@ class AnsysQiskitMetal(AbstractSim):
 
         ### Notation
         hfss = self.hfss_renderer.sim.renderer
-
-        ### Save Names for access later
-        self.eigenmode_design_name = design_name
-        self.eigenmode_setup_name = setup_name
 
         ### Start ANSYS, Active Design
         hfss.start()
@@ -227,7 +248,7 @@ class AnsysQiskitMetal(AbstractSim):
         return self.epra
             
     def run_CapMatirx(self,
-                      design_name: str = "QubitCavity_q3d",
+                      design_name: str = None,
                       setup_name: str = "Setup",
                       freq_ghz: int = 2,
                       max_delta_f: float = 0.1,
@@ -268,12 +289,15 @@ class AnsysQiskitMetal(AbstractSim):
         Returns:
             self.cap_matrix (pd.DataFrame): Capacitance matrix.
         """
-
-        q3d = self.q3d_renderer.sim.renderer
-
-        ### Save Names
-        self.q3d_design_name = design_name
+        
+        ### Naming of design & setup
+        if (design_name == None):
+            design_name = self.q3d_design_name
+        
         self.q3d_setup_name = setup_name
+
+        ### Notation
+        q3d = self.q3d_renderer.sim.renderer
 
         ### Start ANSYS
         q3d.start()
@@ -303,7 +327,7 @@ class AnsysQiskitMetal(AbstractSim):
                                         [name],
                                         MaxLength=MaxLength)
        
-        ### Change silicon
+        ### Use pyAEDT to do custom functionality
         self._pyAEDT_functionality(solutiontype='Q3d')
 
         ### Add Setup
@@ -430,8 +454,26 @@ class AnsysQiskitMetal(AbstractSim):
         return package
 
     
-    def _parse_CapMatrix(self) -> dict:
-        raise NotImplementedError()
+    def _parse_CapMatrix(self, wavelength: str) -> dict:
+
+        if (wavelength == 'quarter'): # Shorted to ground
+            raise NotImplementedError()
+            package = {'cross_to_ground_pF': ,
+                       'cross_to_cpw_pF': ,
+                       'cpw_to_ground_pF': ,
+                       'full_matirx': self.cap_matrix}
+        elif (wavelength == "half"): # Open to ground
+            raise NotImplementedError()
+            package = {'cross_to_ground_pF': ,
+                   'cross_to_cpw_pF': ,
+                   'cpw_to_ground_pF': ,
+                   'full_matirx': self.cap_matrix}
+        else:
+            raise ValueError("Supported cavity wavelengths are ['quarter', 'half']. \
+                             'quarter' refers to a cavity which is shorted to ground. \
+                             'half' refers to a cavity which is open to ground.")
+
+        return package
         
     def _calc_CouplingStrength(self) -> dict:
         raise NotImplementedError()
