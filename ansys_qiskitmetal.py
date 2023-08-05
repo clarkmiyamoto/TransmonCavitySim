@@ -464,16 +464,15 @@ class AnsysQiskitMetal(AbstractSim):
 
         if (wavelength == 'quarter'): # Shorted to ground
             raise NotImplementedError()
-            package = {'cross_to_ground_pF': ,
-                       'cross_to_cpw_pF': ,
-                       'cpw_to_ground_pF': ,
-                       'full_matirx': self.cap_matrix}
+            # package = {'cross_to_ground_pF': ,
+            #            'cross_to_cpw_pF': ,
+            #            'cpw_to_ground_pF': ,
+            #            'full_matirx': self.cap_matrix}
         elif (wavelength == "half"): # Open to ground
             raise NotImplementedError()
-            package = {'cross_to_ground_pF': ,
-                   'cross_to_cpw_pF': ,
-                   'cpw_to_ground_pF': ,
-                   'full_matirx': self.cap_matrix}
+            # package = {'cross_to_ground_pF': ,
+            #        'cross_to_cpw_pF': ,
+            #        'full_matirx': self.cap_matrix}
         else:
             raise ValueError("Supported cavity wavelengths are ['quarter', 'half']. \
                              'quarter' refers to a cavity which is shorted to ground. \
