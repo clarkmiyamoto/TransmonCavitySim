@@ -308,21 +308,21 @@ class AnsysQiskitMetal(AbstractSim):
 
         ### Add mesh
         # Qubit Mesh
-        hfss.modeler.mesh_length('qubit',
+        q3d.modeler.mesh_length('qubit',
                                  [f'cross_{self.qubit_name}'],
                                  MaxLength=qubit_mesh_MaxLength)
 
         # CPW Mesh
         trace_names = [f'trace_{cpw_name}' for cpw_name in self.cpws_names]
         claw_name = [f'{self.connection_pad_name}_connector_arm_{self.qubit_name}']
-        hfss.modeler.mesh_length('cpw',
+        q3d.modeler.mesh_length('cpw',
                                 trace_names + claw_name,
                                 MaxLength=cavity_mesh_MaxLength)
 
         # Other Meshes
         if type(other_mesh_MaxLength) == dict:
             for name, MaxLength in other_mesh_MaxLength.items():
-                hfss.modeler.mesh_length(name,
+                q3d.modeler.mesh_length(name,
                                         [name],
                                         MaxLength=MaxLength)
        
@@ -454,7 +454,7 @@ class AnsysQiskitMetal(AbstractSim):
 
         
         self.qubit_freq = omegas['0'][0] # Linear MHz
-        self.cavity_freq = omegas['1'][0] # Linear MHz
+        self.cavity_freq = omegas['0'][1] # Linear MHz
         self.anharmonicity = chis[0][0] # Linear MHz
         self.other_data_EPR = str(other_data)
 
