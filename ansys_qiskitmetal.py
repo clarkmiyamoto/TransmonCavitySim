@@ -43,8 +43,8 @@ class AnsysQiskitMetal(AbstractSim):
         # Name of renderers
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M")
 
-        self.hfss_renderer.default_options.project_name = "QubitCavity" + self.timestamp
-        self.q3d_renderer.default_options.project_name = "QubitCavity" + self.timestamp
+        self.hfss_renderer.sim.renderer.default_options.project_name = "QubitCavity" + self.timestamp
+        self.q3d_renderer.sim.renderer.default_options.project_name = "QubitCavity" + self.timestamp
         self.eigenmode_design_name = "QubitCavity_eigenmode" + self.timestamp
         self.q3d_design_name = "QubitCavity_q3d" + self.timestamp
 
