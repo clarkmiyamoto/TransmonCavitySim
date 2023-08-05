@@ -338,8 +338,8 @@ class AnsysQiskitMetal(AbstractSim):
         ### Use pyAEDT to do custom functionality
         try:
             self._pyAEDT_functionality(solutiontype='Q3d')
-        except:
-            raise UserWarning("pyAEDT custom functionality failed.")
+        except Exception as e:
+            print(f"pyAEDT custom functionality failed. Error:\n {str(e)}")
 
         ### Add Setup
         q3d.add_q3d_setup(
@@ -528,3 +528,6 @@ class AnsysQiskitMetal(AbstractSim):
     def _calc_CouplingStrength(self) -> dict:
         raise NotImplementedError()
 
+
+    def _close_ansys_sessions(self):
+        raise NotImplementedError()
