@@ -423,7 +423,7 @@ class AnsysQiskitMetal(AbstractSim):
         variable_manager = aedt._variable_manager
 
         variable_manager["Lj"] = self.design.components[self.qubit_name].options['hfss_inductance']
-        variable_manager["Lj"] = self.design.components[self.qubit_name].options['hfss_capacitance']
+        variable_manager["Cj"] = self.design.components[self.qubit_name].options['hfss_capacitance']
 
 
     def _parse_all_results(self, print_result=True):
