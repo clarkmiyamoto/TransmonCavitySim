@@ -113,6 +113,11 @@ class AnsysQiskitMetal(AbstractSim):
                 in micrometers. The keys should be the region names, and values should be the maximum mesh length.
 
         """
+        ### For mesh plots
+        self.qubit_mesh_MaxLength = qubit_mesh_MaxLength
+        self.cavity_mesh_MaxLength = cavity_mesh_MaxLength
+        self.other_mesh_MaxLength = other_mesh_MaxLength
+
         ### Naming of design & setup
         if (design_name == None):
             design_name = self.eigenmode_design_name
@@ -288,7 +293,11 @@ class AnsysQiskitMetal(AbstractSim):
         Returns:
             self.cap_matrix (pd.DataFrame): Capacitance matrix.
         """
-        
+        ### For mesh plots
+        self.qubit_mesh_MaxLength = qubit_mesh_MaxLength
+        self.cavity_mesh_MaxLength = cavity_mesh_MaxLength
+        self.other_mesh_MaxLength = other_mesh_MaxLength
+
         ### Naming of design & setup
         if (design_name == None):
             design_name = self.q3d_design_name
@@ -325,9 +334,12 @@ class AnsysQiskitMetal(AbstractSim):
                 q3d.modeler.mesh_length(name,
                                         [name],
                                         MaxLength=MaxLength)
-       
+
         ### Use pyAEDT to do custom functionality
-        self._pyAEDT_functionality(solutiontype='Q3d')
+        try:
+            self._pyAEDT_functionality(solutiontype='Q3d')
+        except:
+            raise UserWarning("pyAEDT custom functionality failed.")
 
         ### Add Setup
         q3d.add_q3d_setup(
@@ -360,6 +372,25 @@ class AnsysQiskitMetal(AbstractSim):
 
         return self.cap_matrix
 
+    def _plot_mesh(self, aedt):
+        """
+        Method to plot the mesh of the design.
+        """
+        # Ensure a design is present
+        if aedt.modeler.primitives.num_objects > 0:
+            # Generate mesh
+            max_mesh_length = max(self.qubit_mesh_MaxLength, self.cavity_mesh_MaxLength, self.other_mesh_MaxLength)
+            aedt.mesh.assignlength("all", max_mesh_length)
+
+            # Create a 3D plot
+            setup_name = aedt.nominal_adaptive
+            mesh_plot = aedt.post.create_fieldplot_surface("Mag_E1", "Phase_E", setup_name)
+
+            # Show the plot
+            mesh_plot.plot()
+        else:
+            print("No design present to visualize mesh.")
+
     def _pyAEDT_functionality(self, solutiontype):
         """Interfaces w/ ANSYS via pyEPR for more custom automation.
         1. Connect to ANSYS
@@ -379,15 +410,16 @@ class AnsysQiskitMetal(AbstractSim):
             projectname = self.q3d_renderer.sim.renderer.pinfo.project_name
             designname = self.q3d_renderer.sim.renderer.get_active_design_name()
             aedt = Q3d(projectname=projectname,
-                       designname=designname,
-                       new_desktop_session=False, 
-                       close_on_exit=False)
+                    designname=designname,
+                    new_desktop_session=False,
+                    close_on_exit=False)
         else:
             raise NotImplementedError('`solutiontype` not implemented yet. Only supports ["Eigenmode", "Q3d"].')
         
         self._ultra_cold_silicon(aedt)
         self._delete_old_setups(aedt)
-        self._set_variable(aedt)
+        self._set_variable(aedt, solutiontype)
+        self._plot_mesh(aedt)
 
         aedt.release_desktop(close_projects=False, close_desktop=False)
 
@@ -408,11 +440,12 @@ class AnsysQiskitMetal(AbstractSim):
         Args:
             aedt (pyAEDT Desktop obj)
         """
+        print(aedt.setups)
         # Clear setups
         if len(aedt.setups) != 0:
             aedt.setups[0].delete()
         
-    def _set_variable(self, aedt):
+    def _set_variable(self, aedt, solutiontype):
         """
         Sets project-level variable in ANSYS.
 
@@ -420,10 +453,16 @@ class AnsysQiskitMetal(AbstractSim):
             aedt (pyAEDT Desktop obj)
                 
         """
-        variable_manager = aedt._variable_manager
-
-        variable_manager["Lj"] = self.design.components[self.qubit_name].options['hfss_inductance']
-        variable_manager["Cj"] = self.design.components[self.qubit_name].options['hfss_capacitance']
+        if solutiontype == 'Eigenmode':
+            variable_manager = aedt._variable_manager
+            variable_manager["Lj"] = self.design.components[self.qubit_name].options['hfss_inductance']
+            variable_manager["Cj"] = self.design.components[self.qubit_name].options['hfss_capacitance']
+        elif solutiontype == 'Q3d':
+            variable_manager = aedt._variable_manager
+            variable_manager["Lj"] = self.design.components[self.qubit_name].options['q3d_inductance']
+            variable_manager["Cj"] = self.design.components[self.qubit_name].options['q3d_capacitance']
+        else:
+            raise NotImplementedError('`solutiontype` not implemented yet. Only supports ["Eigenmode", "Q3d"].')
 
 
     def _parse_all_results(self, print_result=True):
